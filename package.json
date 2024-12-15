@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "playwright": "^1.49.1",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  },
+  "name": "recipeapp",
+  "version": "1.0.0",
+  "description": "Recipe app to manage recipes and collaborate with others.",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node --env-file=.env dist/main.js",
+    "user": "tsc && node --env-file=.env dist/models/user.js"
+  },
+  "keywords": [
+    "recipe",
+    "fun",
+    "recipe",
+    "manager"
+  ],
+  "author": "Richard",
+  "license": "ISC"
+}

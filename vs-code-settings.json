@@ -1,0 +1,7 @@
+{
+  "editor.formatOnSave": true,
+  "prettier.singleQuote": true,
+  "notebook.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.acceptSuggestionOnCommitCharacter": false
+}
