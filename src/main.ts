@@ -1,20 +1,45 @@
 console.log('Main file started :)')
 
 import express, { Express, Request, Response } from 'express'
-import { Database } from './database'
+/* import { Database } from './database'
+ */
+import { userRouter } from './routes/user-routes'
+import bodyParser from 'body-parser'
+import cors from 'cors'
+import helmet from 'helmet'
+import swaggerUi from 'swagger-ui-express'
+import swaggerOutput from './swagger_output.json'
 
+/* 
 const db1 = Database.getInstance()
 const db2 = Database.getInstance()
 
 console.log(db1 === db2) // true
+ */
+const PORT = parseInt(process.env.PORT as string, 10)
 
-/* const app: Express = express();
-const port = process.env.PORT || 3000;
+const app: Express = express()
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Express + TypeScript Server');
-});
+// Middleware
+app.use(bodyParser.json())
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  }),
+)
+app.use(cors())
+app.use(helmet())
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
-}); */
+// log time for every request to the router
+app.use((req, res, next) => {
+  console.log('Time:', Date.now())
+  next()
+})
+
+app.use('/', userRouter)
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerOutput))
+
+app.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}`)
+})

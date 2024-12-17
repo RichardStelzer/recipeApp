@@ -4,7 +4,7 @@ import { Pool } from 'pg'
 export class Database {
   private static poolInstance: Pool | null = null
   // private to prevent direct construction calls with the "new" operator
-  //private constructor() {}
+  private constructor() {}
 
   // static getter controls access to singleton instance
   public static getInstance() {
@@ -21,7 +21,7 @@ export class Database {
         console.error('Unexpected error on idle client database class: ', err)
         process.exit(-1)
       })
-      console.log('Database connection pool created -> ', this.poolInstance)
+      //console.log('Database connection pool created -> ', this.poolInstance)
     }
 
     return this.poolInstance
