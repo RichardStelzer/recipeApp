@@ -8,7 +8,7 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import helmet from 'helmet'
 import swaggerUi from 'swagger-ui-express'
-import swaggerOutput from './swagger_output.json'
+import swaggerOutput from '../dist/swagger_output.json'
 
 /* 
 const db1 = Database.getInstance()
@@ -30,11 +30,11 @@ app.use(
 app.use(cors())
 app.use(helmet())
 
-// log time for every request to the router
+/* // log time for every request to the router
 app.use((req, res, next) => {
   console.log('Time:', Date.now())
   next()
-})
+}) */
 
 app.use('/', userRouter)
 

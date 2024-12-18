@@ -6,6 +6,15 @@ import { StatusCodes } from 'http-status-codes'
 const userRouter = express.Router()
 // Get users
 userRouter.get('/users', async (_req: Request, res: Response) => {
+  /* 
+    #swagger.tags = ['Users']
+    #swagger.summary = 'getUsers'
+    #swagger.description = '*description* for getUsers'
+    
+    #swagger.responses[200] = { description: 'OK.' }
+    #swagger.responses[404] = { description: 'There are no users yet.' }
+    #swagger.responses[500] = { description: 'Internal server error.'}
+  */
   try {
     const allUsers = await Database.getInstance()!.query('select * from t_user')
     if (!allUsers) {
@@ -23,6 +32,23 @@ userRouter.get('/users', async (_req: Request, res: Response) => {
 
 // Get user by id
 userRouter.get('/users/:userId', async (req: Request, res: Response, next) => {
+  /*
+    #swagger.tags = ['Users'] 
+    #swagger.summary = 'getUserById'
+    #swagger.description = '*description* for getUserById'
+
+    #swagger.parameters['userId'] = {
+      required: true,
+      schema: {
+        type: 'number'
+      }
+    }
+    
+    
+    #swagger.responses[200] = { description: 'OK.' }
+    #swagger.responses[404] = { description: 'User not found.' }
+    #swagger.responses[500] = { description: 'Internal server error.'}
+  */
   try {
     const userId = parseInt(req.params['userId'])
     const user = await Database.getInstance()!.query(
@@ -41,6 +67,26 @@ userRouter.get('/users/:userId', async (req: Request, res: Response, next) => {
 
 // Create new user
 userRouter.post('/user', async (req: Request, res: Response, next) => {
+  /*
+    #swagger.tags = ['Users']
+    #swagger.summary = 'createUser'
+    #swagger.description = '**description** for createUser'
+
+    #swagger.requestBody = {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            $ref: '#/components/schemas/createUser'
+          }
+        }
+      } 
+    }
+    #swagger.responses[201] = { description: 'User created successfully.' }
+    #swagger.responses[409] = { description: 'No matching country found.' }
+    #swagger.responses[500] = { description: 'Internal server error.'}
+  */
+
   try {
     //console.log(req)
     const first_name = req.body['first_name']

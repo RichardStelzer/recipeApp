@@ -9,7 +9,7 @@ const doc = {
   servers: [
     {
       url: 'http://localhost:3000',
-      description: '',
+      description: 'super server haja',
     },
   ],
   components: {
@@ -17,6 +17,19 @@ const doc = {
       bearerAuth: {
         type: 'http',
         scheme: 'bearer',
+      },
+    },
+    schemas: {
+      getUserById: {
+        userId: 1,
+      },
+      createUser: {
+        first_name: 'Max',
+        last_name: 'Mustermann',
+        $email: 'max.mustermann@muster.de',
+        country: {
+          '@enum': ['DE', 'ES', 'FR', 'BE', 'EN'],
+        },
       },
     },
   },
