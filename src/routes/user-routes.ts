@@ -44,7 +44,6 @@ userRouter.get('/users/:userId', async (req: Request, res: Response, next) => {
       }
     }
     
-    
     #swagger.responses[200] = { description: 'OK.' }
     #swagger.responses[404] = { description: 'User not found.' }
     #swagger.responses[500] = { description: 'Internal server error.'}
@@ -113,6 +112,126 @@ userRouter.post('/user', async (req: Request, res: Response, next) => {
         country: country,
       })
     }
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
+  }
+})
+
+// Update existing user
+userRouter.patch('/users/:userId', async (req: Request, res: Response) => {
+  /*
+    #swagger.tags = ['Users']
+    #swagger.summary = 'patchUser'
+    #swagger.description = 'Update user data.'
+
+    #swagger.parameters['userId'] = {
+      required: true,
+      schema: {
+        type: 'number'
+      }
+    }
+    
+    #swagger.requestBody = {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            $ref: '#/components/schemas/patchUser'
+          }
+        }
+      } 
+    }
+    #swagger.responses[200] = { description: 'User updated successfully.' }
+    #swagger.responses[404] = { description: 'User not found.' }
+    #swagger.responses[409] = { description: 'Country not available.' }
+    #swagger.responses[500] = { description: 'Internal server error.'}
+  */
+
+  try {
+    // Identify user
+    const userId = parseInt(req.params['userId'])
+    const user = await Database.getInstance()!.query(
+      'select * from t_user where id = $1',
+      [userId],
+    )
+    if (user.rows.length === 0) {
+      res.status(StatusCodes.NOT_FOUND).json({})
+      return
+    }
+
+    // Update information
+    const first_name = req.body['first_name']
+    const last_name = req.body['last_name']
+    const email = req.body['email']
+    const language = req.body['language']
+    const country = req.body['country']
+
+    const countryId = await Database.getInstance()!.query(
+      'select id from t_country where iso2 = $1',
+      [country],
+    )
+    if (countryId.rows.length === 0) {
+      res
+        .status(StatusCodes.CONFLICT)
+        .json({ noMatchingCountryFoundForCountry: country })
+    } else {
+      const postResult = await Database.getInstance()!.query(
+        `update t_user 
+         set first_name = $1, last_name = $2, email = $3, country_id = $4, language = $5
+         where id = $6`,
+        [first_name, last_name, email, countryId.rows[0].id, language, userId],
+      )
+      res.status(StatusCodes.OK).json({
+        userId: userId,
+        first_name: first_name,
+        last_name: last_name,
+        email: email,
+        language: language,
+        country: country,
+      })
+    }
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
+  }
+})
+
+// Delete existing user
+userRouter.delete('/users/:userId', async (req: Request, res: Response) => {
+  /*
+    #swagger.tags = ['Users']
+    #swagger.summary = 'deleteUser'
+    #swagger.description = 'Delete user.'
+
+    #swagger.parameters['userId'] = {
+      required: true,
+      schema: {
+        type: 'number'
+      }
+    }
+    
+    #swagger.responses[204] = { description: 'User removed successfully.' }
+    #swagger.responses[404] = { description: 'User not found.' }
+    #swagger.responses[500] = { description: 'Internal server error.'}
+  */
+
+  try {
+    // Identify user
+    const userId = parseInt(req.params['userId'])
+    const user = await Database.getInstance()!.query(
+      'select * from t_user where id = $1',
+      [userId],
+    )
+    if (user.rows.length === 0) {
+      res.status(StatusCodes.NOT_FOUND).json({})
+      return
+    }
+
+    // Delete user
+    const deleteResult = await Database.getInstance()!.query(
+      `delete from t_user where id = $1`,
+      [userId],
+    )
+    res.status(StatusCodes.NO_CONTENT).json({})
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
   }

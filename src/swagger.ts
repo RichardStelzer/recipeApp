@@ -23,13 +23,30 @@ const doc = {
       getUserById: {
         userId: 1,
       },
+      patchUser: {
+        first_name: 'Max',
+        last_name: 'Mustermann',
+        $email: 'max.mustermann@muster.de',
+        language: {
+          '@enum': ['de', 'es', 'fr', 'be', 'en'],
+        },
+        country: {
+          '@enum': ['DE', 'ES', 'FR', 'BE', 'GB'],
+        },
+      },
       createUser: {
         first_name: 'Max',
         last_name: 'Mustermann',
         $email: 'max.mustermann@muster.de',
-        country: {
-          '@enum': ['DE', 'ES', 'FR', 'BE', 'EN'],
+        language: {
+          '@enum': ['de', 'es', 'fr', 'be', 'en'],
         },
+        country: {
+          '@enum': ['DE', 'ES', 'FR', 'BE', 'GB'],
+        },
+      },
+      deleteUser: {
+        userId: 1,
       },
     },
   },
