@@ -84,6 +84,7 @@ userRouter.post('/user', async (req: Request, res: Response, next) => {
     #swagger.responses[201] = { description: 'User created successfully.' }
     #swagger.responses[409] = { description: 'No matching country found.' }
     #swagger.responses[500] = { description: 'Internal server error.'}
+    #swagger.responses[1995] = { description: 'Hello World.'}
   */
 
   try {
