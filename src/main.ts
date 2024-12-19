@@ -4,6 +4,7 @@ import express, { Express, Request, Response } from 'express'
 /* import { Database } from './database'
  */
 import { userRouter } from './routes/user-routes'
+import { recipeRouter } from './routes/recipe-routes'
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -37,6 +38,7 @@ app.use((req, res, next) => {
 }) */
 
 app.use('/', userRouter)
+app.use('/', recipeRouter)
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerOutput))
 
