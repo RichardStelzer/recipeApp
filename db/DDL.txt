@@ -1,0 +1,105 @@
+-- DROP SCHEMA public;
+
+CREATE SCHEMA public AUTHORIZATION pg_database_owner;
+
+-- DROP SEQUENCE public.t_country_id_seq;
+
+CREATE SEQUENCE public.t_country_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+-- DROP SEQUENCE public.t_user_id_seq;
+
+CREATE SEQUENCE public.t_user_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+-- DROP SEQUENCE public.t_user_settings_id_seq;
+
+CREATE SEQUENCE public.t_user_settings_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;-- public.t_country definition
+
+-- Drop table
+
+-- DROP TABLE public.t_country;
+
+CREATE TABLE public.t_country (
+	id serial4 NOT NULL,
+	first_created timestamp NULL,
+	first_created_by varchar NULL,
+	last_adapted timestamp NULL,
+	last_adapted_by varchar NULL,
+	"name" varchar NULL,
+	iso2 varchar NULL,
+	iso3 varchar NULL,
+	"numeric" int4 NULL,
+	CONSTRAINT t_country_pk PRIMARY KEY (id)
+);
+
+
+-- public.t_user definition
+
+-- Drop table
+
+-- DROP TABLE public.t_user;
+
+CREATE TABLE public.t_user (
+	id serial4 NOT NULL,
+	first_name varchar NULL,
+	email varchar NOT NULL,
+	"language" varchar NULL,
+	country_id int4 NULL,
+	user_settings_id int4 NULL,
+	last_name varchar NOT NULL,
+	first_created timestamp NULL,
+	first_created_by varchar NULL,
+	last_adapted timestamp NULL,
+	last_adapted_by varchar NULL,
+	CONSTRAINT t_user_pk PRIMARY KEY (id),
+	CONSTRAINT t_user_unique UNIQUE (user_settings_id)
+);
+
+-- Table Triggers
+
+create trigger auto_insert_first_created before
+insert
+    on
+    public.t_user for each row execute function insert_first_created();
+
+
+-- public.t_user_settings definition
+
+-- Drop table
+
+-- DROP TABLE public.t_user_settings;
+
+CREATE TABLE public.t_user_settings (
+	id serial4 NOT NULL,
+	user_id int4 NOT NULL,
+	preferred_language varchar NULL,
+	preferred_email varchar NULL,
+	CONSTRAINT t_user_settings_pk PRIMARY KEY (id),
+	CONSTRAINT t_user_settings_unique UNIQUE (preferred_email, user_id)
+);
+
+
+-- public.t_user foreign keys
+
+ALTER TABLE public.t_user ADD CONSTRAINT t_user_t_country_fk FOREIGN KEY (country_id) REFERENCES public.t_country(id);
+ALTER TABLE public.t_user ADD CONSTRAINT t_user_t_user_settings_fk FOREIGN KEY (user_settings_id) REFERENCES public.t_user_settings(id) ON DELETE CASCADE;
+
+
+-- public.t_user_settings foreign keys
+
+ALTER TABLE public.t_user_settings ADD CONSTRAINT t_user_settings_t_user_fk FOREIGN KEY (user_id) REFERENCES public.t_user(id);
