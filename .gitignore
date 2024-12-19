@@ -1,0 +1,11 @@
+# folders
+db/init_load_user.csv
+node_modules
+concept
+dist
+api_testing
+
+# sensitive config
+.env
+
+# other
