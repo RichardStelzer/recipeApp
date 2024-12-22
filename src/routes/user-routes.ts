@@ -5,26 +5,116 @@ import { StatusCodes } from 'http-status-codes'
 
 const userRouter = express.Router()
 // Get users
-userRouter.get('/users', async (_req: Request, res: Response) => {
+userRouter.get('/users', async (req: Request, res: Response) => {
   /* 
     #swagger.tags = ['Users']
     #swagger.summary = 'getUsers'
     #swagger.description = '*description* for getUsers'
     
+    #swagger.parameters['filter'] = {
+      in: 'query',
+      description: 'Filter by columns and rows, with order type asc (+) or desc (-). E.g., <first_name-> or <email:kingKäs@oberschlaumeier.de>',
+      type: 'string',
+      default: 'id+'
+    }
+    #swagger.parameters['limit'] = {
+      in: 'query',
+      description: 'Max amount of users per page',
+      type: 'number',
+      default: '5'
+    }
+    #swagger.parameters['page'] = {
+      in: 'query',
+      description: 'Current page',
+      type: 'number',
+      default: '0'
+    }
+
     #swagger.responses[200] = { description: 'OK.' }
-    #swagger.responses[404] = { description: 'There are no users yet.' }
+    #swagger.responses[404] = { description: 'No users found.' }
     #swagger.responses[500] = { description: 'Internal server error.'}
   */
   try {
-    const allUsers = await Database.getInstance()!.query('select * from t_user')
-    if (!allUsers) {
-      res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ msg: `There are no users yet ..` })
+    let orderByColumn: string = ''
+    let orderByRow: string = ''
+    let orderByType: string = 'asc' // + -> ASC, - -> DESC
+    let limit: number = 5
+    let currentPage: number = 0
+
+    const columnsAvailableForFilter: string[] = [
+      'id',
+      'first_name',
+      'last_name',
+      'email',
+    ]
+
+    // Validate limit and page size query parameters
+    if (typeof req.query['limit'] === 'string') {
+      limit = parseInt(req.query['limit'])
     }
-    res
-      .status(StatusCodes.OK)
-      .json({ total_user: allUsers.rows.length, users: allUsers.rows })
+    if (typeof req.query['page'] === 'string') {
+      currentPage = parseInt(req.query['page'])
+    }
+    let offset: number = limit * currentPage
+
+    // Process filter query input
+    const filter = req.query['filter']
+    if (typeof filter === 'string') {
+      if (filter.includes(':')) {
+        const splitFilter = filter.split(':')
+        orderByColumn = splitFilter[0] // email+
+        orderByRow = splitFilter[1] // magnus@carlsen.de
+      } else {
+        orderByColumn = filter // email+
+      }
+      // Validate order type
+      switch (orderByColumn.slice(-1)) {
+        case '+':
+          orderByType = 'asc'
+          orderByColumn = orderByColumn.slice(0, -1)
+          break
+        case '-':
+          orderByType = 'desc'
+          orderByColumn = orderByColumn.slice(0, -1)
+          break
+        default:
+          orderByType = 'asc'
+      }
+    }
+
+    // Set default column
+    if (orderByColumn === '') {
+      orderByColumn = 'id'
+    }
+
+    // Validate column from query parameters
+    if (!columnsAvailableForFilter.includes(orderByColumn)) {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        msg: `The coulumn "${orderByColumn}" is not available for filtering.`,
+      })
+    }
+
+    // Query the database
+    let filteredUsers = null
+    if (!orderByRow) {
+      filteredUsers = await Database.getInstance()!.query(
+        `select * from t_user order by ${orderByColumn} ${orderByType} limit $1 offset $2`,
+        [limit, offset],
+      )
+    } else {
+      filteredUsers = await Database.getInstance()!.query(
+        `select * from t_user where ${orderByColumn} = $1 order by ${orderByColumn} ${orderByType} limit $2 offset $3`,
+        [orderByRow, limit, offset],
+      )
+    }
+
+    if (!filteredUsers) {
+      res.status(StatusCodes.NOT_FOUND).json({ msg: `No users found ..` })
+    }
+    res.status(StatusCodes.OK).json({
+      total_user: filteredUsers.rows.length,
+      users: filteredUsers.rows,
+    })
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
   }
