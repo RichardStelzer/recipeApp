@@ -20,6 +20,7 @@ const doc = {
       },
     },
     schemas: {
+      /* User API */
       getUserById: {
         userId: 1,
       },
@@ -47,6 +48,20 @@ const doc = {
       },
       deleteUser: {
         userId: 1,
+      },
+
+      /* Recipe API */
+      getRecipes: {
+        'filter by columns': {
+          '@enum': [
+            'id',
+            'first_created',
+            'title',
+            'category',
+            'author_last_name',
+            'ingredient',
+          ],
+        },
       },
     },
   },
