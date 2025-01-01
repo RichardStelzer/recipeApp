@@ -31,6 +31,7 @@ userRouter.get('/users', async (req: Request, res: Response) => {
     }
 
     #swagger.responses[200] = { description: 'OK.' }
+    #swagger.responses[400] = { description: 'Bad request.'}
     #swagger.responses[404] = { description: 'No users found.' }
     #swagger.responses[500] = { description: 'Internal server error.'}
   */
@@ -90,7 +91,7 @@ userRouter.get('/users', async (req: Request, res: Response) => {
     // Validate column from query parameters
     if (!columnsAvailableForFilter.includes(orderByColumn)) {
       res.status(StatusCodes.BAD_REQUEST).json({
-        msg: `The coulumn "${orderByColumn}" is not available for filtering.`,
+        msg: `The column "${orderByColumn}" is not available for filtering.`,
       })
     }
 
