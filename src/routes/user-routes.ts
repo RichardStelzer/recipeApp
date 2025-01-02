@@ -10,13 +10,20 @@ userRouter.get('/users', async (req: Request, res: Response) => {
     #swagger.tags = ['Users']
     #swagger.summary = 'getUsers'
     #swagger.description = '*description* for getUsers'
-    
+
     #swagger.parameters['filter'] = {
       in: 'query',
-      description: 'Filter by columns and rows, with order type asc (+) or desc (-). E.g., <first_name-> or <email:kingKäs@oberschlaumeier.de>',
+      description: 'Filter for parameter <parameter:value> and combine multiple filters separated by ;. E.g., <first_name:jane;email:kingKäs@oberschlaumeier.de>. Available parameters [id, first_name, last_name, email,]',
+      type: 'string',
+      default: '',
+    }
+    #swagger.parameters['sort'] = {
+      in: 'query',
+      description: 'Sort by parameter and add + for ascending or - for descending sorting. E.g., <title->. Available parameters [id, first_name, last_name, email,]',
       type: 'string',
       default: 'id+'
     }
+
     #swagger.parameters['limit'] = {
       in: 'query',
       description: 'Max amount of users per page',
@@ -37,7 +44,7 @@ userRouter.get('/users', async (req: Request, res: Response) => {
   */
   try {
     let orderByColumn: string = ''
-    let orderByRow: string = ''
+    let filterKeyValuePair: { [key: string]: string } = {}
     let orderByType: string = 'asc' // + -> ASC, - -> DESC
     let limit: number = 5
     let currentPage: number = 0
@@ -61,59 +68,91 @@ userRouter.get('/users', async (req: Request, res: Response) => {
     // Process filter query input
     const filter = req.query['filter']
     if (typeof filter === 'string') {
-      if (filter.includes(':')) {
-        const splitFilter = filter.split(':')
-        orderByColumn = splitFilter[0] // email+
-        orderByRow = splitFilter[1] // magnus@carlsen.de
-      } else {
-        orderByColumn = filter // email+
+      const splitFilter = filter.split(';')
+      for (let i = 0; i < splitFilter.length; i++) {
+        const singleFilter = splitFilter[i]
+        if (singleFilter.includes(':')) {
+          const splitSingleFilter = singleFilter.split(':')
+          filterKeyValuePair[splitSingleFilter[0]] = splitSingleFilter[1]
+        } else {
+          res.status(StatusCodes.BAD_REQUEST).json({
+            msg: `Filter query parameter is incomplete. Make sure the parameter:value pair is complete.`,
+          })
+          return
+        }
       }
-      // Validate order type
-      switch (orderByColumn.slice(-1)) {
+    }
+
+    // Validate columns from query parameters
+    for (let i = 0; i < Object.keys(filterKeyValuePair).length; i++) {
+      const key = Object.keys(filterKeyValuePair)[i]
+      if (!columnsAvailableForFilter.includes(key)) {
+        res.status(StatusCodes.BAD_REQUEST).json({
+          msg: `The parameter "${filter}" is not available for filtering.`,
+        })
+        return
+      }
+    }
+
+    // Process sort parameter
+    // Validate order type
+    const sortParam = String(req.query['sort'])
+    if (typeof sortParam === 'string') {
+      switch (sortParam.slice(-1)) {
         case '+':
           orderByType = 'asc'
-          orderByColumn = orderByColumn.slice(0, -1)
+          orderByColumn = sortParam.slice(0, -1)
           break
         case '-':
           orderByType = 'desc'
-          orderByColumn = orderByColumn.slice(0, -1)
+          orderByColumn = sortParam.slice(0, -1)
           break
         default:
           orderByType = 'asc'
+          orderByColumn = sortParam
       }
     }
-
-    // Set default column
-    if (orderByColumn === '') {
+    // Set default column to sort by
+    if (!orderByColumn) {
       orderByColumn = 'id'
     }
 
-    // Validate column from query parameters
     if (!columnsAvailableForFilter.includes(orderByColumn)) {
       res.status(StatusCodes.BAD_REQUEST).json({
-        msg: `The column "${orderByColumn}" is not available for filtering.`,
+        msg: `The column "${orderByColumn}" is not available for sorting.`,
       })
+      return
     }
 
     // Query the database
     let filteredUsers = null
-    if (!orderByRow) {
+    if (Object.keys(filterKeyValuePair).length === 0) {
       filteredUsers = await Database.getInstance()!.query(
         `select * from t_user order by ${orderByColumn} ${orderByType} limit $1 offset $2`,
         [limit, offset],
       )
     } else {
-      filteredUsers = await Database.getInstance()!.query(
-        `select * from t_user where ${orderByColumn} = $1 order by ${orderByColumn} ${orderByType} limit $2 offset $3`,
-        [orderByRow, limit, offset],
-      )
+      // Dynamically create the sql
+      let sql = 'select * from t_user where 1=1'
+      let values = []
+      Object.keys(filterKeyValuePair).forEach((key, index) => {
+        sql += ` AND ${key} = $${index + 1}`
+        values.push(filterKeyValuePair[key])
+      })
+      sql += ` order by ${orderByColumn} ${orderByType} limit $${values.length + 1} offset $${values.length + 2}`
+      values.push(limit, offset)
+      filteredUsers = await Database.getInstance()!.query(sql, values)
     }
 
     if (!filteredUsers) {
       res.status(StatusCodes.NOT_FOUND).json({ msg: `No users found ..` })
+      return
     }
+
     res.status(StatusCodes.OK).json({
       total_user: filteredUsers.rows.length,
+      currentPage: currentPage,
+      offset: offset,
       users: filteredUsers.rows,
     })
   } catch (error) {
