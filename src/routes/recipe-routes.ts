@@ -48,26 +48,6 @@ recipeRouter.get('/recipes', async (req: Request, res: Response) => {
     let limit: number = 5
     let currentPage: number = 0
 
-    const columnsAvailableForFilter: string[] = [
-      'tr.id',
-      'tr.title',
-      'tr.first_created',
-      'tu.last_name',
-      'tu.email',
-      'tc.name',
-      'tt.text',
-      'tt2.text',
-    ]
-
-    const columnsAvailableForSort: string[] = [
-      'tr.id',
-      'tr.title',
-      'tr.first_created',
-      'tu.last_name',
-      'tu.email',
-      'tc.name',
-    ]
-
     // Validate limit and page size query parameters
     if (typeof req.query['limit'] === 'string') {
       limit = parseInt(req.query['limit'])
@@ -85,23 +65,37 @@ recipeRouter.get('/recipes', async (req: Request, res: Response) => {
         const singleFilter = splitFilter[i]
         if (singleFilter.includes(':')) {
           const splitSingleFilter = singleFilter.split(':')
-          filterKeyValuePair[splitSingleFilter[0]] = splitSingleFilter[1]
+          // Translate input and validate
+          let translatedFilterKey = ''
+          switch (splitSingleFilter[0]) {
+            case 'id':
+              translatedFilterKey = 'tr.id'
+              break
+            case 'title':
+              translatedFilterKey = 'tr.title'
+              break
+            case 'category':
+              translatedFilterKey = 'tc.name'
+              break
+            case 'author_last_name':
+              translatedFilterKey = 'tu.last_name'
+              break
+            case 'author_email':
+              translatedFilterKey = 'tu.email'
+              break
+            default:
+              res.status(StatusCodes.BAD_REQUEST).json({
+                msg: `The parameter "${filter}" is not available for filtering.`,
+              })
+              return
+          }
+          filterKeyValuePair[translatedFilterKey] = splitSingleFilter[1]
         } else {
           res.status(StatusCodes.BAD_REQUEST).json({
             msg: `Filter query parameter is incomplete. Make sure the parameter:value pair is complete.`,
           })
           return
         }
-      }
-    }
-    // Validate columns from query parameters
-    for (let i = 0; i < Object.keys(filterKeyValuePair).length; i++) {
-      const key = Object.keys(filterKeyValuePair)[i]
-      if (!columnsAvailableForFilter.includes(key)) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-          msg: `The parameter "${filter}" is not available for filtering.`,
-        })
-        return
       }
     }
 
@@ -123,7 +117,7 @@ recipeRouter.get('/recipes', async (req: Request, res: Response) => {
           orderByColumn = sortParam
       }
     }
-    // Translate sort param to table
+    // Translate input and validate
     switch (orderByColumn) {
       case 'id':
         orderByColumn = 'tr.id'
@@ -144,43 +138,44 @@ recipeRouter.get('/recipes', async (req: Request, res: Response) => {
         orderByColumn = 'tu.email'
         break
       default:
-        orderByColumn = 'tr.id'
-    }
-
-    if (!columnsAvailableForSort.includes(orderByColumn)) {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        msg: `The column "${orderByColumn}" is not available for sorting.`,
-      })
-      return
+        res.status(StatusCodes.BAD_REQUEST).json({
+          msg: `The parameter "${orderByColumn}" is not available for sorting.`,
+        })
+        return
     }
 
     // Query the database
     let filteredRecipes = null
+    const baseSql = `select tr.id,
+                            tr.title, 
+                            tr.first_created,
+                            tu.last_name as "author_last_name" , 
+                            tu.email as "author_email" , 
+                            tc.name as "category", 
+                            tt.text as "description", 
+                            tt2.text as "steps" 
+                    from t_recipe tr  
+                    left join t_user tu
+                    on tu.id = tr.author_user_id
+                    left join t_category tc
+                    on tc.id = tr.category_id
+                    left join t_textblock tt
+                    on tt.id = tr.description_textblock_id
+                    left join t_textblock tt2
+                    on tt2.id = tr.steps_textblock_id
+                    where 1=1`
+
     if (Object.keys(filterKeyValuePair).length === 0) {
-      filteredRecipes = await Database.getInstance()!.query(
-        `select tr.id,
-                tr.title, 
-                tr.first_created,
-                tu.last_name as "author_last_name" , 
-                tu.email as "author_email" , 
-                tc.name as "category", 
-                tt.text as "description", 
-                tt2.text as "steps" 
-         from t_recipe tr  
-         left join t_user tu
-         on tu.id = tr.author_user_id
-         left join t_category tc
-         on tc.id = tr.category_id
-         left join t_textblock tt
-         on tt.id = tr.description_textblock_id
-         left join t_textblock tt2
-         on tt2.id = tr.steps_textblock_id
-         order by ${orderByColumn} ${orderByType} limit $1 offset $2`,
-        [limit, offset],
-      )
+      let sql = baseSql
+      sql += ` order by ${orderByColumn} ${orderByType} limit $1 offset $2`
+
+      filteredRecipes = await Database.getInstance()!.query(sql, [
+        limit,
+        offset,
+      ])
     } else {
       // Dynamically create the sql
-      let sql = 'select * from t_user where 1=1'
+      let sql = baseSql
       let values = []
       Object.keys(filterKeyValuePair).forEach((key, index) => {
         sql += ` AND ${key} = $${index + 1}`
