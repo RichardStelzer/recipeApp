@@ -55,11 +55,20 @@ const doc = {
         'filter by columns': {
           '@enum': [
             'id',
-            'first_created',
             'title',
             'category',
             'author_last_name',
-            'ingredient',
+            'author_email',
+          ],
+        },
+        'sort by columns': {
+          '@enum': [
+            'id',
+            'first_created',
+            'title',
+            'author_last_name',
+            'author_email',
+            'category',
           ],
         },
       },

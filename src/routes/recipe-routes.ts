@@ -13,7 +13,7 @@ recipeRouter.get('/recipes', async (req: Request, res: Response) => {
     
     #swagger.parameters['filter'] = {
       in: 'query',
-      description: 'Filter for parameter <parameter:value> and combine multiple filters separated by ;. E.g., <category:grilled dishes;author_last_name:jane> | Available parameters [id, first_created, title, category, author_last_name, ingredient]',
+      description: 'Filter for parameter <parameter:value> and combine multiple filters separated by ;. E.g., <category:grilled dishes;author_last_name:jane> | Available parameters [id, title, category, author_last_name, author_email]',
       type: 'string',
       default: '',
     }
