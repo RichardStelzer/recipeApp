@@ -218,7 +218,6 @@ userRouter.post('/user', async (req: Request, res: Response, next) => {
   */
 
   try {
-    //console.log(req)
     const first_name = req.body['first_name']
     const last_name = req.body['last_name']
     const email = req.body['email']

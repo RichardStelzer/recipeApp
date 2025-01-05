@@ -72,6 +72,32 @@ const doc = {
           ],
         },
       },
+      createRecipe: {
+        title: 'Pfannkuchen deluxe',
+        category: {
+          name: 'Pfannengericht',
+          text: 'Alles was in der Pfanne zubereitet wird.',
+        },
+        ingredient: [
+          {
+            name: 'Ei',
+            text: 'Na ein Ei halt',
+            name_plural: 'Eier',
+            measurement_unit: 'mittelgroß',
+            measurement_quantity: 3,
+          },
+          {
+            name: 'Butter',
+            text: 'Na Butter halt',
+            name_plural: 'Butter',
+            measurement_unit: 'g',
+            measurement_quantity: 250,
+          },
+        ],
+        description:
+          'Solides Gericht geht so und so bla bla super Beschreibung.',
+        steps: '1. Tu dies 2. Tu das 3. Aha 4. Oho 5. Oh no',
+      },
     },
   },
 }
