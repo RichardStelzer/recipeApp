@@ -9,30 +9,30 @@ userRouter.get('/users', async (req: Request, res: Response) => {
   /* 
     #swagger.tags = ['Users']
     #swagger.summary = 'getUsers'
-    #swagger.description = '*description* for getUsers'
+    #swagger.description = '*description* for getUsers.'
 
     #swagger.parameters['filter'] = {
       in: 'query',
-      description: 'Filter for parameter <parameter:value> and combine multiple filters separated by ;. E.g., <first_name:jane;email:kingKäs@oberschlaumeier.de>. Available parameters [id, first_name, last_name, email,]',
+      description: 'Filter for parameter <parameter:value> and combine multiple filters separated by ;. E.g., <first_name:jane;email:kingKäs@oberschlaumeier.de>. Available parameters [id, first_name, last_name, email].',
       type: 'string',
       default: '',
     }
     #swagger.parameters['sort'] = {
       in: 'query',
-      description: 'Sort by parameter and add + for ascending or - for descending sorting. E.g., <title->. Available parameters [id, first_name, last_name, email,]',
+      description: 'Sort by parameter and add + for ascending or - for descending sorting. E.g., <title->. Available parameters [id, first_name, last_name, email].',
       type: 'string',
       default: 'id+'
     }
 
     #swagger.parameters['limit'] = {
       in: 'query',
-      description: 'Max amount of users per page',
+      description: 'Max amount of users per page.',
       type: 'number',
       default: '5'
     }
     #swagger.parameters['page'] = {
       in: 'query',
-      description: 'Current page',
+      description: 'Current page.',
       type: 'number',
       default: '0'
     }
@@ -165,7 +165,7 @@ userRouter.get('/users/:userId', async (req: Request, res: Response, next) => {
   /*
     #swagger.tags = ['Users'] 
     #swagger.summary = 'getUserById'
-    #swagger.description = '*description* for getUserById'
+    #swagger.description = '*description* for getUserById.'
 
     #swagger.parameters['userId'] = {
       required: true,
@@ -199,7 +199,7 @@ userRouter.post('/user', async (req: Request, res: Response, next) => {
   /*
     #swagger.tags = ['Users']
     #swagger.summary = 'createUser'
-    #swagger.description = '**description** for createUser'
+    #swagger.description = '**description** for createUser.'
 
     #swagger.requestBody = {
       required: true,
