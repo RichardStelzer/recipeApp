@@ -116,158 +116,31 @@ export const createRecipe = async (req: Request, res: Response) => {
     #swagger.responses[1995] = { description: 'Hello World.'}
     */
 
-  // Get client from pg pool
-  const pool = Database.getInstance() as Pool
-  const client = await pool.connect()
+  const userId = parseInt(req.params['userId'])
+  const categoryName: string = req.body['category'].name
+  const categoryText: string = req.body['category'].text
+  const recipeDescription: string = req.body['description']
+  const recipeSteps: string = req.body['steps']
+  const recipeTitle: string = req.body['title']
+  const ingredients: any = req.body['ingredient']
 
   try {
-    // Validate input data
-    const userId = parseInt(req.params['userId'])
-
-    // Start Transaction
-    await client.query('BEGIN')
-
-    // Create category if it does not exist yet
-    const categoryName = req.body['category'].name
-    const categoryText = req.body['category'].text
-    const insertCategoryTextblockResult = await client.query(
-      'insert into t_textblock(text, first_created_by) values($1,$2) returning id',
-      [categoryText, userId],
+    const response = await recipeServices.createRecipe(
+      userId,
+      categoryName,
+      categoryText,
+      recipeDescription,
+      recipeSteps,
+      recipeTitle,
+      ingredients,
     )
-    const categoryDescriptionTextblockId =
-      insertCategoryTextblockResult['rows'][0].id
-    const insertCategoryResult = await client.query(
-      `insert into t_category(name, description_textblock_id, first_created_by)
-         values($1,$2,$3) 
-         on conflict (name) do update 
-         set name = excluded.name 
-         returning id`,
-      [categoryName, categoryDescriptionTextblockId, userId],
-    )
-    const categoryId = insertCategoryResult['rows'][0].id
-    // Create description
-    const recipeDescription = req.body['description']
-    const insertRecipeDescriptionResult = await client.query(
-      'insert into t_textblock(text, first_created_by) values($1,$2) returning id',
-      [recipeDescription, userId],
-    )
-    const recipeDescriptionId = insertRecipeDescriptionResult['rows'][0].id
-    // Create steps
-    const recipeSteps = req.body['steps']
-    const insertRecipeStepsResult = await client.query(
-      'insert into t_textblock(text, first_created_by) values($1,$2) returning id',
-      [recipeSteps, userId],
-    )
-    const recipeStepsId = insertRecipeStepsResult['rows'][0].id
-    // Create recipe if it does not exist yet
-    const recipeTitle = req.body['title']
-    const insertRecipeResult = await client.query(
-      `insert into t_recipe(title, description_textblock_id, author_user_id, steps_textblock_id, category_id, first_created_by) 
-         values($1,$2,$3,$4,$5,$6) 
-         on conflict (title, description_textblock_id, steps_textblock_id, category_id) do update 
-         set title = excluded.title 
-         returning id`,
-      [
-        recipeTitle,
-        recipeDescriptionId,
-        userId,
-        recipeStepsId,
-        categoryId,
-        userId,
-      ],
-    )
-    const recipeId = insertRecipeResult['rows'][0].id
-    // Process ingredients
-    let ingredientArray = []
-    for (let i = 0; i < req.body['ingredient'].length; i++) {
-      const ingredientName = req.body['ingredient'][i].name
-      const ingredientDescriptionText = req.body['ingredient'][i].text
-      const ingredientNamePlural = req.body['ingredient'][i].name_plural
-      const ingredientMeasurementUnit =
-        req.body['ingredient'][i].measurement_unit
-      const ingredientMeasurementQuantity =
-        req.body['ingredient'][i].measurement_quantity
-
-      // Create ingredient description textblock
-      const insertIngredientDescriptionTextResult = await client.query(
-        'insert into t_textblock(text, first_created_by) values($1,$2) returning id',
-        [ingredientDescriptionText, userId],
-      )
-      const ingredientDescriptionTextblockId =
-        insertIngredientDescriptionTextResult['rows'][0].id
-      // Create ingredient if it does not exist yet
-      const insertIngredientResult = await client.query(
-        `insert into t_ingredient(name, ingredient_description_textblock, name_plural, created_by) 
-           values($1,$2,$3,$4) 
-           on conflict (name, name_plural) do update 
-           set name = excluded.name 
-           returning id`,
-        [
-          ingredientName,
-          ingredientDescriptionTextblockId,
-          ingredientNamePlural,
-          userId,
-        ],
-      )
-      const ingredientId = insertIngredientResult['rows'][0].id
-      // Create measurement quantity if it does not exist yet
-      const insertMeasurementQuantityResult = await client.query(
-        `insert into t_measurement_quantity(quantity, first_created_by) values($1,$2) 
-           on conflict (quantity) do update 
-           set quantity = excluded.quantity 
-           returning id`,
-        [ingredientMeasurementQuantity, userId],
-      )
-      const measurementQuantityId =
-        insertMeasurementQuantityResult['rows'][0].id
-      // Create measurement unit if it does not exist yet
-      const insertMeasurementUnitResult = await client.query(
-        `insert into t_measurement_unit(unit, first_created_by) 
-           values($1,$2) on conflict (unit) do update 
-           set unit = excluded.unit 
-           returning id`,
-        [ingredientMeasurementUnit, userId],
-      )
-      const measurementUnitId = insertMeasurementUnitResult['rows'][0].id
-      // Create connection between ingredient, measurement unit, measurement quantity and recipe
-      const insertRecipeIngredientResult = await client.query(
-        `insert into t_recipe_ingredient(recipe_id, ingredient_id, measurement_unit_id, measurement_quantity_id, first_created_by) 
-           values($1,$2,$3,$4,$5) 
-           on conflict (recipe_id, ingredient_id, measurement_unit_id, measurement_quantity_id) do nothing`,
-        [
-          recipeId,
-          ingredientId,
-          measurementUnitId,
-          measurementQuantityId,
-          userId,
-        ],
-      )
-      ingredientArray.push({
-        name: ingredientName,
-        namePlural: ingredientNamePlural,
-        description: ingredientDescriptionText,
-        measurementUnit: ingredientMeasurementUnit,
-        measurementQuantity: ingredientMeasurementQuantity,
-      })
-    }
-
-    // Commit transaction
-    await client.query('COMMIT')
-
-    res.status(StatusCodes.CREATED).json({
-      title: recipeTitle,
-      description: recipeDescription,
-      categoryName: categoryName,
-      categoryText: categoryText,
-      steps: recipeSteps,
-      ingredients: ingredientArray,
-    })
+    res.status(StatusCodes.CREATED).json(response)
   } catch (error) {
-    // Rollback
-    await client.query('ROLLBACK')
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message })
+      return
+    }
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
-  } finally {
-    client.release()
   }
 }
 
