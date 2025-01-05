@@ -1,8 +1,12 @@
-import express, { Express, Request, Response } from 'express'
-/* import { Recipe } from '../models/recipe'
- */ import { Database } from '../database'
+import express, { NextFunction, Request, Response } from 'express'
+import { Database } from '../database'
 import { StatusCodes } from 'http-status-codes'
 import { Pool } from 'pg'
+import {
+  validateBodySchema,
+  validateParameterSchema,
+} from '../middlewares/validate-request-data'
+import { userSchema, recipeSchema } from '../schemas/recipe-schemas'
 
 const recipeRouter = express.Router()
 // Get recipes
@@ -206,6 +210,8 @@ recipeRouter.get('/recipes', async (req: Request, res: Response) => {
 // Create recipe
 recipeRouter.post(
   '/recipe/:userId',
+  validateParameterSchema(userSchema),
+  validateBodySchema(recipeSchema),
   async (req: Request, res: Response, next) => {
     /*
     #swagger.tags = ['Recipes']
@@ -240,91 +246,8 @@ recipeRouter.post(
     const client = await pool.connect()
 
     try {
-      /* Example payload:
-      {
-        "title": string,
-        "category": {
-          "name": string,
-          "text": string
-        },
-        "ingredient": [{
-          "name": string,
-          "text": string,
-          "name_plural": string,
-          "measurement_unit": string,  
-          "measurement_quantity": number,
-        }],
-        "description": string,
-        "steps": string
-      }  
-      */
       // Validate input data
       const userId = parseInt(req.params['userId'])
-
-      if (typeof req.body['title'] !== 'string') {
-        res.status(StatusCodes.BAD_REQUEST).json({
-          msg: `The body value for the key "title" is not a string`,
-        })
-        return
-      }
-      if (typeof req.body['category'].name !== 'string') {
-        res.status(StatusCodes.BAD_REQUEST).json({
-          msg: `The body value for the key "category.name" is not a string`,
-        })
-        return
-      }
-      if (typeof req.body['category'].text !== 'string') {
-        res.status(StatusCodes.BAD_REQUEST).json({
-          msg: `The body value for the key "category.text" is not a string`,
-        })
-        return
-      }
-      for (let i = 0; i < req.body['ingredient'].length; i++) {
-        if (typeof req.body['ingredient'][i].name !== 'string') {
-          res.status(StatusCodes.BAD_REQUEST).json({
-            msg: `The body value for the key "ingredient.name" is not a string`,
-          })
-          return
-        }
-        if (typeof req.body['ingredient'][i].text !== 'string') {
-          res.status(StatusCodes.BAD_REQUEST).json({
-            msg: `The body value for the key "ingredient.text" is not a string`,
-          })
-          return
-        }
-        if (typeof req.body['ingredient'][i].name_plural !== 'string') {
-          res.status(StatusCodes.BAD_REQUEST).json({
-            msg: `The body value for the key "ingredient.name_plural" is not a string`,
-          })
-          return
-        }
-        if (typeof req.body['ingredient'][i].measurement_unit !== 'string') {
-          res.status(StatusCodes.BAD_REQUEST).json({
-            msg: `The body value for the key "ingredient.measurement_unit" is not a string`,
-          })
-          return
-        }
-        if (
-          typeof req.body['ingredient'][i].measurement_quantity !== 'number'
-        ) {
-          res.status(StatusCodes.BAD_REQUEST).json({
-            msg: `The body value for the key "ingredient.measurement_quantity" is not a number`,
-          })
-          return
-        }
-      }
-      if (typeof req.body['description'] !== 'string') {
-        res.status(StatusCodes.BAD_REQUEST).json({
-          msg: `The body value for the key "description" is not a string`,
-        })
-        return
-      }
-      if (typeof req.body['steps'] !== 'string') {
-        res.status(StatusCodes.BAD_REQUEST).json({
-          msg: `The body value for the key "steps" is not a string`,
-        })
-        return
-      }
 
       // Start Transaction
       await client.query('BEGIN')
