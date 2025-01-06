@@ -12,7 +12,6 @@ export const getRecipe = async (
   let filterKeyValuePair: { [key: string]: string } = {}
   let orderByType: string = 'asc' // + -> ASC, - -> DESC
 
-  // Validate limit and page size query parameters
   let offset: number = limit * currentPage
 
   // Process filter query input

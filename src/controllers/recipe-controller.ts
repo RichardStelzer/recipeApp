@@ -1,7 +1,5 @@
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
-import { Database } from '../database'
-import { Pool } from 'pg'
 import * as recipeServices from '../services/recipe-service'
 import { AppError } from '../utils/errors'
 
@@ -114,7 +112,7 @@ export const createRecipe = async (req: Request, res: Response) => {
     #swagger.responses[400] = { description: 'Bad request.'}
     #swagger.responses[500] = { description: 'Internal server error.'}
     #swagger.responses[1995] = { description: 'Hello World.'}
-    */
+  */
 
   const userId = parseInt(req.params['userId'])
   const categoryName: string = req.body['category'].name
