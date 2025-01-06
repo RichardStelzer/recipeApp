@@ -126,3 +126,97 @@ export const getUser = async (
 
   return filteredData
 }
+
+export const getUserById = async (userId: number) => {
+  const user = await Database.getInstance()!.query(
+    'select * from t_user where id = $1',
+    [userId],
+  )
+  if (user.rows.length === 0) {
+    throw new NotFoundError(`User not found.`)
+  } else {
+    const filteredData = user.rows
+    return filteredData
+  }
+}
+
+export const createUser = async (
+  first_name: string,
+  last_name: string,
+  email: string,
+  country: string,
+) => {
+  const countryId = await Database.getInstance()!.query(
+    'select id from t_country where iso2 = $1',
+    [country],
+  )
+  if (countryId.rows.length === 0) {
+    throw new ValidationError(`Country "${country}" is not available.`)
+  } else {
+    const postResult = await Database.getInstance()!.query(
+      'insert into t_user(first_name, last_name, email, country_id) values($1,$2,$3,$4)',
+      [first_name, last_name, email, countryId.rows[0].id],
+    )
+    return postResult
+  }
+}
+
+export const patchUser = async (
+  userId: number,
+  first_name: string,
+  last_name: string,
+  email: string,
+  language: string,
+  country: string,
+) => {
+  // Identify user
+  const user = await Database.getInstance()!.query(
+    'select * from t_user where id = $1',
+    [userId],
+  )
+  if (user.rows.length === 0) {
+    throw new NotFoundError(`User is not available.`)
+  }
+
+  // Update information
+  const countryId = await Database.getInstance()!.query(
+    'select id from t_country where iso2 = $1',
+    [country],
+  )
+  if (countryId.rows.length === 0) {
+    throw new ValidationError(`Country "${country}" is not available.`)
+  } else {
+    const postResult = await Database.getInstance()!.query(
+      `update t_user 
+           set first_name = $1, last_name = $2, email = $3, country_id = $4, language = $5
+           where id = $6`,
+      [first_name, last_name, email, countryId.rows[0].id, language, userId],
+    )
+
+    return {
+      userId: userId,
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
+      language: language,
+      country: country,
+    }
+  }
+}
+
+export const deleteUser = async (userId: number) => {
+  // Identify user
+  const user = await Database.getInstance()!.query(
+    'select * from t_user where id = $1',
+    [userId],
+  )
+  if (user.rows.length === 0) {
+    throw new NotFoundError(`User is not available.`)
+  }
+
+  // Delete user
+  const deleteResult = await Database.getInstance()!.query(
+    `delete from t_user where id = $1`,
+    [userId],
+  )
+}

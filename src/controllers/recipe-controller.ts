@@ -132,7 +132,7 @@ export const createRecipe = async (req: Request, res: Response) => {
       recipeTitle,
       ingredients,
     )
-    res.status(StatusCodes.CREATED).json(response)
+    res.status(StatusCodes.CREATED).json({ response })
   } catch (error) {
     if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message })
