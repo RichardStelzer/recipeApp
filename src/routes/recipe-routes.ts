@@ -3,7 +3,7 @@ import {
   validateBodySchema,
   validateParameterSchema,
 } from '../middlewares/validate-request-data'
-import { userSchema, recipeSchema } from '../schemas/recipe-schemas'
+import { userSchema, recipeSchema } from '../models/schemas'
 import * as recipeController from '../controllers/recipe-controller'
 
 const recipeRouter = express.Router()

@@ -1,6 +1,11 @@
 import { Pool } from 'pg'
 import { Database } from '../database'
-import { DatabaseError, NotFoundError, ValidationError } from '../utils/errors'
+import {
+  AppError,
+  DatabaseError,
+  NotFoundError,
+  ValidationError,
+} from '../utils/errors'
 
 export const getUser = async (
   filter: string | undefined,
@@ -93,7 +98,11 @@ export const getUser = async (
                         tu.first_name, 
                         tu.last_name,
                         tu.email,
+                        tu.language,
+                        tc.iso2 as "country_iso2"
                     from t_user tu
+                        left join t_country tc
+                        on tu.country_id = tc.id
                     where 1=1`
 
   if (Object.keys(filterKeyValuePair).length === 0) {
@@ -129,7 +138,21 @@ export const getUser = async (
 
 export const getUserById = async (userId: number) => {
   const user = await Database.getInstance()!.query(
-    'select * from t_user where id = $1',
+    `select
+        tu.id,
+        tu.first_name,
+        tu.last_name,
+        tu.email,
+        tc.name as "country_name",
+        tc.iso2 as "country_iso2",
+        tc.iso3 as "country_iso3",
+        tu.language,
+        tu.first_created,
+        tu.last_adapted
+     from t_user tu
+        left join t_country tc
+        on tu.country_id = tc.id
+     where tu.id = $1`,
     [userId],
   )
   if (user.rows.length === 0) {
@@ -145,19 +168,37 @@ export const createUser = async (
   last_name: string,
   email: string,
   country: string,
+  language: string,
 ) => {
+  // Check if country is available
   const countryId = await Database.getInstance()!.query(
     'select id from t_country where iso2 = $1',
     [country],
   )
   if (countryId.rows.length === 0) {
     throw new ValidationError(`Country "${country}" is not available.`)
-  } else {
-    const postResult = await Database.getInstance()!.query(
-      'insert into t_user(first_name, last_name, email, country_id) values($1,$2,$3,$4)',
-      [first_name, last_name, email, countryId.rows[0].id],
-    )
-    return postResult
+  }
+
+  // Check if email is available
+  const emailId = await Database.getInstance()!.query(
+    'select id from t_user where email = $1',
+    [email],
+  )
+  if (emailId.rows.length !== 0) {
+    throw new ValidationError(`Email '${email}' is already in use.`)
+  }
+
+  // Create new user
+  const postResult = await Database.getInstance()!.query(
+    'insert into t_user(first_name, last_name, email, language, country_id) values($1,$2,$3,$4,$5)',
+    [first_name, last_name, email, language, countryId.rows[0].id],
+  )
+  return {
+    first_name: first_name,
+    last_name: last_name,
+    email: email,
+    country: country,
+    language: language,
   }
 }
 
