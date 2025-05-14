@@ -36,13 +36,13 @@ const doc = {
         },
       },
       createUser: {
-        first_name: 'Max',
-        last_name: 'Mustermann',
+        $first_name: 'Max',
+        $last_name: 'Mustermann',
         $email: 'max.mustermann@muster.de',
-        language: {
+        $language: {
           '@enum': ['de', 'es', 'fr', 'be', 'en'],
         },
-        country: {
+        $country: {
           '@enum': ['DE', 'ES', 'FR', 'BE', 'GB'],
         },
       },
