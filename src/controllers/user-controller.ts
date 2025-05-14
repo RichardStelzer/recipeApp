@@ -7,7 +7,7 @@ export const getUser = async (req: Request, res: Response) => {
   /* 
     #swagger.tags = ['Users']
     #swagger.summary = 'getUsers'
-    #swagger.description = '*description* for getUsers.'
+    #swagger.description = 'Get basic information of users.'
 
     #swagger.parameters['filter'] = {
       in: 'query',
@@ -88,7 +88,7 @@ export const getUserById = async (req: Request, res: Response) => {
   /*
     #swagger.tags = ['Users'] 
     #swagger.summary = 'getUserById'
-    #swagger.description = '*description* for getUserById.'
+    #swagger.description = 'Get detailed information about a specific user.'
 
     #swagger.parameters['userId'] = {
       required: true,
@@ -108,6 +108,10 @@ export const getUserById = async (req: Request, res: Response) => {
     const response = await userServices.getUserById(userId)
     res.status(StatusCodes.OK).json({ response })
   } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message })
+      return
+    }
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
   }
 }
@@ -117,7 +121,7 @@ export const createUser = async (req: Request, res: Response) => {
   /*
     #swagger.tags = ['Users']
     #swagger.summary = 'createUser'
-    #swagger.description = '**description** for createUser.'
+    #swagger.description = 'Create **new** user.'
 
     #swagger.requestBody = {
       required: true,
@@ -139,6 +143,7 @@ export const createUser = async (req: Request, res: Response) => {
   const last_name = req.body['last_name']
   const email = req.body['email']
   const country = req.body['country']
+  const language = req.body['language']
 
   try {
     const response = await userServices.createUser(
@@ -146,9 +151,14 @@ export const createUser = async (req: Request, res: Response) => {
       last_name,
       email,
       country,
+      language,
     )
     res.status(StatusCodes.CREATED).json({ response })
   } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message })
+      return
+    }
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
   }
 }
